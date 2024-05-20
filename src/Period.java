@@ -8,4 +8,12 @@ public class Period {
         this.time = time;
         this.weekDay = weekDay;
     }
+
+    @Override
+    public String toString() {
+        return "Period{" +
+                "time=" + time +
+                ", weekDay=" + weekDay +
+                '}';
+    }
 }

@@ -6,6 +6,7 @@ public class Lecture {
     public String type;
     public Group allocatedGroup;
     public Subject subject;
+    private boolean isCourse = false;
 
     public Lecture(String title, Subject subject, Teacher teacher, String type, Group allocatedGroup) {
         this.title = title;
@@ -21,6 +22,13 @@ public class Lecture {
         this.allocatedGroup = allocatedGroup;
         this.subject = subject;
     }
+    public Lecture(String title, Subject subject, String type, Group allocatedGroup, boolean isCourse) {
+        this.title = title;
+        this.type = type;
+        this.allocatedGroup = allocatedGroup;
+        this.subject = subject;
+        this.isCourse = isCourse;
+    }
 
     public void setTeacher(Teacher teacher) {
         this.teacher = teacher;
@@ -32,6 +40,14 @@ public class Lecture {
 
     public void setAllocatedPeriod(Period period) {
         this.allocatedPeriod = period;
+    }
+
+    public boolean isCourse() {
+        return isCourse;
+    }
+
+    public String getGroupName() {
+        return this.allocatedGroup == null ? "Course" : this.allocatedGroup.getName();
     }
 
     @Override

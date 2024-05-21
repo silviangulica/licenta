@@ -10,6 +10,17 @@ public class Period {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof Period period)) {
+            return false;
+        }
+        return time.equals(period.time) && weekDay == period.weekDay;
+    }
+
+    @Override
     public String toString() {
         return "Period{" +
                 "time=" + time +

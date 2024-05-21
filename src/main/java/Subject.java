@@ -28,7 +28,7 @@ public class Subject {
             var lecture = new Lecture(this.name, this, "lecture", group);
             this.lectureList.add(lecture);
         }
-        var courseLecture = new Lecture(this.name, this, "course", null);
+        var courseLecture = new Lecture(this.name, this, "course", new Group("Course", 150), true);
         this.lectureList.add(courseLecture);
     }
 

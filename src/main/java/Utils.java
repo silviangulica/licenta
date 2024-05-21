@@ -2,8 +2,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static j2html.TagCreator.*;
 
@@ -32,53 +34,77 @@ public class Utils {
         }
     }
 
-    public static void generateHTMLDocumentForSubject(List<Subject> subjects) {
+    public static void generateHTMLDocumentForLectures(List<Lecture> lectures) {
 
-        // sort the subjects by weekDay and time
-        subjects.sort((subject1, subject2) -> {
-            var lecture1 = subject1.getLectureList().getFirst();
-            var lecture2 = subject2.getLectureList().getFirst();
-            return lecture1.allocatedPeriod.weekDay - lecture2.allocatedPeriod.weekDay;
+        // Create a table with headers
+
+        // sortam pe grupe lectures
+        lectures.sort((l1, l2) -> {
+            if (l1.allocatedGroup == null && l2.allocatedGroup == null) {
+                return 0;
+            }
+            if (l1.allocatedGroup == null) {
+                return -1;
+            }
+            if (l2.allocatedGroup == null) {
+                return 1;
+            }
+            return l1.allocatedGroup.getName().compareTo(l2.allocatedGroup.getName());
         });
 
-        // Create the html document with the style of an actual timetable
-        var html = html(
-                head(
-                        title("Timetable"),
-                        style(".timetable { border-collapse: collapse; width: 100%; }" +
-                                ".timetable td, .timetable th { border: 1px solid #ddd; padding: 8px; }" +
-                                ".timetable tr:nth-child(even){background-color: #f2f2f2;}" +
-                                ".timetable tr:hover {background-color: #ddd;}" +
-                                ".timetable th { padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #4CAF50; color: white; }")
-                ),
-                body(
-                        h1("Timetable"),
-                        table(attrs(".timetable"),
-                                thead(
-                                        tr(
-                                                th("Subject"),
-                                                th("Lecture"),
-                                                th("Teacher"),
-                                                th("Classroom"),
-                                                th("Period"),
-                                                th("Type"),
-                                                th("Group")
-                                        )
-                                ),
-                                tbody(
-                                        each(subjects, subject -> each(subject.getLectureList(), lecture -> tr(
-                                                td(subject.getName()),
-                                                td(lecture.title),
-                                                td(lecture.teacher != null ? lecture.teacher.name : ""),
-                                                td(lecture.classroom != null ? lecture.classroom.name : ""),
-                                                td(lecture.allocatedPeriod != null ? lecture.allocatedPeriod.time.toString() + " " + lecture.allocatedPeriod.weekDay : ""),
-                                                td(lecture.type),
-                                                td(lecture.allocatedGroup != null ? lecture.allocatedGroup.getName() : "")
-                                        )))
-                                )
+
+        var table = table(
+                thead(
+                        tr(
+                                th("Title"),
+                                th("Teacher"),
+                                th("Classroom"),
+                                th("Period"),
+                                th("Type"),
+                                th("Group")
                         )
                 )
         );
+
+        // Add rows to the table and if 2 lectures are in the same period, same weekday and same group, mark in red
+        // also convert periods and weekdays to strings, i mean weekday number in the day name
+        for (Lecture lecture : lectures) {
+            var tr = tr(
+                    td(lecture.title),
+                    td(lecture.teacher.name),
+                    td(lecture.classroom == null ? "" : lecture.classroom.name),
+                    td(lecture.allocatedPeriod == null ? "" : lecture.allocatedPeriod.time.toString() + " " + lecture.allocatedPeriod.weekDay),
+                    td(lecture.type),
+                    td(lecture.getGroupName())
+            );
+
+            if (lectures.stream().filter(l -> l.allocatedPeriod != null && l.allocatedPeriod.equals(lecture.allocatedPeriod) && l.allocatedGroup.equals(lecture.allocatedGroup)).count() > 1) {
+                tr.withClasses("table-danger");
+            }
+
+            table.with(tr);
+        }
+
+        // Also add how many rows are in red
+        var redRows = lectures.stream().filter(l -> l.allocatedPeriod != null && lectures.stream().filter(l2 -> l2.allocatedPeriod != null && l2.allocatedPeriod.equals(l.allocatedPeriod) && l2.allocatedGroup.equals(l.allocatedGroup)).count() > 1).count();
+        table.with(
+                caption("There are " + redRows + " rows in red")
+        );
+
+        // Create the html document
+        var html = html(
+                head(
+                        title("Lectures"),
+                        link().withRel("stylesheet").withHref("https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css")
+                ),
+                body(
+                        div(
+                                h1("Lectures"),
+                                table.withClasses("table table-striped")
+                        ).withClasses("container")
+                )
+        );
+
 
         // Write the html to a file
         try {

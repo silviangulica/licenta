@@ -1,0 +1,38 @@
+﻿[
+{
+"name": "Colab. Miron Radu",
+"subjects": ["Calcul Numeric"]
+},
+{
+"name": "Colab. drd. Grigoriu Alecsandru",
+"subjects": ["Interactiune om-calculator"]
+},
+{
+"name": "Conf. dr. Vitcu Anca",
+"subjects": ["Analiza reţelelor media sociale"]
+},
+{
+"name": "Lect. dr. Armanu Nicoleta",
+"subjects": ["Limba Engleza 2", "Psihologia Comunicarii Profesionale in Domeniul IT-ului"]
+},
+{
+"name": "Lect. dr. Croitoru Eugen",
+"subjects": ["Grafica pe calculator si geometrie computationala"]
+},
+{
+"name": "Lect. dr. Ghirvu Lucian",
+"subjects": ["Grafica pe calculator si geometrie computationala"]
+},
+{
+"name": "Lect. dr. Iftene Sorin",
+"subjects": ["Fundamentele Algebrice ale Informaticii", "Introducere in Criptografie", "Aspecte Computationale in Teoria Numerelor"]
+},
+{
+"name": "Conf. dr. Ignat Anca",
+"subjects": ["Calcul Numeric"]
+},
+{
+"name": "Lect. dr. Moruz Alex",
+"subjects": ["Ingineria programarii", "Proiectarea jocurilor"]
+}
+]

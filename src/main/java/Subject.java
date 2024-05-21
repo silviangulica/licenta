@@ -1,14 +1,24 @@
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class Subject {
-  private final List<Lecture> lectureList;
-  private final List<Group> groups;
-  private final String name;
+    private final List<Lecture> lectureList;
+    private final List<Group> groups;
+
+    @JsonProperty("name")
+    private final String name;
 
     public Subject(String name) {
         this.name = name;
+        this.groups = new ArrayList<>();
+        this.lectureList = new ArrayList<>();
+    }
+
+    public Subject() {
+        this.name = "";
         this.groups = new ArrayList<>();
         this.lectureList = new ArrayList<>();
     }
@@ -18,7 +28,7 @@ public class Subject {
             var lecture = new Lecture(this.name, this, "lecture", group);
             this.lectureList.add(lecture);
         }
-        var courseLecture = new Lecture(this.name, this,  "course", null);
+        var courseLecture = new Lecture(this.name, this, "course", null);
         this.lectureList.add(courseLecture);
     }
 

@@ -18,25 +18,12 @@ public class SimulatedAnnealing {
         this.init();
     }
 
-    private void loadTeachers(List<String> teachers) {
-        for (String teacher : teachers) {
-            var teacherData = teacher.split(",");
-            var teacherName = teacherData[0];
-            var subjects = teacherData[1].replace("[ ", "").replace(" ]", "").split(";");
-            var teacherObject = new Teacher(teacherName);
-            for (String subject : subjects) {
-                teacherObject.addSubject(subject.strip());
-            }
-            this.teacherList.add(teacherObject);
-        }
+    private void loadTeachers(List<Teacher> teachers) {
+        this.teacherList.addAll(teachers);
     }
 
-    private void loadSubjects(List<String> rawData) {
-        var subjects = rawData.getFirst().split(",");
-        for (String subject : subjects) {
-            var subjectObject = new Subject(subject.strip());
-            this.subjectList.add(subjectObject);
-        }
+    private void loadSubjects(List<Subject> rawData) {
+        this.subjectList.addAll(rawData);
     }
 
     private void generatePeriods() {
@@ -66,7 +53,7 @@ public class SimulatedAnnealing {
 
     private void init() {
         // Load the teachers
-        var teachers = Utils.readFromCsv("./teachers.csv");
+        var teachers = Utils.readTeachersFromJson("./teachers.json");
 
         if (teachers.isEmpty()) {
             System.out.println("No teachers found!");
@@ -75,7 +62,7 @@ public class SimulatedAnnealing {
         teachers.ifPresent(this::loadTeachers);
 
         // Load the subjects
-        var subjects = Utils.readFromCsv("./subjects.csv");
+        var subjects = Utils.readSubjectsFromJson("./subjects.json");
 
         if (subjects.isEmpty()) {
             System.out.println("No subjects found!");
@@ -113,12 +100,30 @@ public class SimulatedAnnealing {
             }
         }
 
-        for (Subject subject : this.subjectList) {
-            System.out.println(subject);
-            for (Lecture lecture : subject.getLectureList()) {
-                System.out.println(lecture);
+        // Implementing the simulated annealing part ;)
+        var temperature = 10000.0;
+        var coolingRate = 0.003;
+
+        while (temperature > 1) {
+            var newSolution = new ArrayList<>(this.subjectList);
+            var randomSubjectIndex = (int) (Math.random() * newSolution.size());
+            var subject = newSolution.get(randomSubjectIndex);
+
+            var newPeriodIndex = (int) (Math.random() * this.periodList.size());
+            var newPeriod = this.periodList.get(newPeriodIndex);
+
+            var currentEnergy = this.calculateEnergy(this.subjectList);
+            var neighbourEnergy = this.calculateEnergy(newSolution);
+
+            if (this.acceptanceProbability(currentEnergy, neighbourEnergy, temperature) > Math.random()) {
+                this.subjectList.clear();
+                this.subjectList.addAll(newSolution);
             }
+
+            temperature *= 1 - coolingRate;
         }
+
+        Utils.generateHTMLDocumentForSubject(this.subjectList);
     }
 
     private void findLecture(Classroom classroom, Period period) {
@@ -145,4 +150,22 @@ public class SimulatedAnnealing {
         return false;
     }
 
+    public float calculateEnergy(List<Subject> subjects) {
+        var energy = 0.0f;
+        for (Subject subject : subjects) {
+            for (Lecture lecture : subject.getLectureList()) {
+                if (null == lecture.allocatedPeriod) {
+                    energy += 1;
+                }
+            }
+        }
+        return energy;
+    }
+
+    public float acceptanceProbability(float energy, float newEnergy, double temperature) {
+        if (newEnergy < energy) {
+            return 1.0f;
+        }
+        return (float) Math.exp((energy - newEnergy) / temperature);
+    }
 }

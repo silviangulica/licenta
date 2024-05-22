@@ -36,9 +36,6 @@ public class Utils {
 
     public static void generateHTMLDocumentForLectures(List<Lecture> lectures) {
 
-        // Create a table with headers
-
-        // sortam pe grupe lectures
         lectures.sort((l1, l2) -> {
             if (l1.allocatedGroup == null && l2.allocatedGroup == null) {
                 return 0;
@@ -66,8 +63,6 @@ public class Utils {
                 )
         );
 
-        // Add rows to the table and if 2 lectures are in the same period, same weekday and same group, mark in red
-        // also convert periods and weekdays to strings, i mean weekday number in the day name
         for (Lecture lecture : lectures) {
             var tr = tr(
                     td(lecture.title),
@@ -85,13 +80,11 @@ public class Utils {
             table.with(tr);
         }
 
-        // Also add how many rows are in red
         var redRows = lectures.stream().filter(l -> l.allocatedPeriod != null && lectures.stream().filter(l2 -> l2.allocatedPeriod != null && l2.allocatedPeriod.equals(l.allocatedPeriod) && l2.allocatedGroup.equals(l.allocatedGroup)).count() > 1).count();
         table.with(
                 caption("There are " + redRows + " rows in red")
         );
 
-        // Create the html document
         var html = html(
                 head(
                         title("Lectures"),
@@ -106,7 +99,6 @@ public class Utils {
         );
 
 
-        // Write the html to a file
         try {
             var file = new File("output.html");
             Files.writeString(file.toPath(), html.render());

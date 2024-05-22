@@ -111,36 +111,36 @@ public class SimulatedAnnealing {
             }
         }
 
-        // Implementing the simulated annealing part ;)
-        var temperature = 1000000.0;
+
+        var currentSolution = this.lectureList;
+
+        var temperature = 1.0;
         var coolingRate = 0.003;
+        var iters = 0;
 
-        double lastDelta = -1;
-        while (temperature > 1) {
-            var currentEnergy = this.calculateEnergy(this.lectureList);
-            var newLectures = this.generateRandomSolution(this.lectureList);
-            var newEnergy = this.calculateEnergy(newLectures);
+        while (temperature > 0.1) {
+            var newSolution = this.generateRandomSolution(currentSolution);
 
-            // TODO: vreau ca abs de lastDelta sa fie cat mai mic
+            var currentEnergy = this.calculateEnergy(currentSolution);
+            var newEnergy = this.calculateEnergy(newSolution);
+
             var deltaEnergy = newEnergy - currentEnergy;
 
-            if (deltaEnergy < 0 && deltaEnergy < lastDelta){
-                this.lectureList = newLectures;
-                lastDelta = deltaEnergy;
-                if (currentEnergy == 0) {
-                    break;
-                }
+            if (deltaEnergy < 0) {
+                currentSolution = newSolution;
             } else {
                 var random = Math.random();
                 if (random < Math.exp(-deltaEnergy / temperature)) {
-                    this.lectureList = newLectures;
+                    currentSolution = newSolution;
                 }
             }
 
-            System.out.println("deltaEnergy" + deltaEnergy + " lastDelta " + lastDelta + " temperature " + temperature);
             temperature *= 1 - coolingRate;
+            System.out.println("Energy: " + deltaEnergy + " Temperature: " + temperature + " Iters: " + iters++);
         }
 
+
+        this.lectureList = currentSolution;
         Utils.generateHTMLDocumentForLectures(this.lectureList);
     }
 
@@ -174,7 +174,11 @@ public class SimulatedAnnealing {
             var classroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
             var period = this.periodList.get((int) (Math.random() * this.periodList.size()));
 
-
+            if (lecture.isCourse()) {
+                while( !classroom.isForCourse() ) {
+                    classroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
+                }
+            }
 
             if (this.isLectureValid(lecture, classroom, period)) {
                 lecture.setClassroom(classroom);
@@ -206,6 +210,14 @@ public class SimulatedAnnealing {
         // Check if a classroom is too small for a group and also verify if the classroom is for course or not
         for (Lecture lecture : lectures) {
             if (lecture.classroom.getCapacity() < lecture.allocatedGroup.getStudentsAmount()) {
+                energy += 1;
+            }
+        }
+
+        // Calculate 2.
+        // Check if the courses are not on monday or tuesday
+        for (Lecture lecture : lectures) {
+            if (lecture.isCourse() && lecture.allocatedPeriod.weekDay > 2) {
                 energy += 1;
             }
         }

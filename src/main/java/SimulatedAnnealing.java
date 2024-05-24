@@ -204,6 +204,38 @@ public class SimulatedAnnealing {
         return true;
     }
 
+    public Lecture getLecture(Period period, Classroom classroom)
+    {
+        for (var lecture : this.lectureList) {
+            if (lecture.allocatedPeriod.equals(period) && lecture.classroom.equals(classroom)) {
+                return lecture;
+            }
+        }
+
+        return null;
+    }
+
+    public Lecture getRandomLecture() {
+        return this.lectureList.get((int) (Math.random() * this.lectureList.size()));
+    }
+
+    private List<Lecture> periodMove(List<Lecture> lectures) {
+//        // pick random period and random classroom
+//        var randomPeriod1 = this.periodList.get((int) (Math.random() * this.periodList.size()));
+//        var randomClassroom1 = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
+//
+//        // get the lecture if there are any
+//        Lecture lectureAtRandomPos1 = getLecture(randomPeriod1, randomClassroom1);
+
+        // pick random period and random classroom
+        var randomPeriod1 = this.periodList.get((int) (Math.random() * this.periodList.size()));
+
+        Lecture lecture;
+        do {
+            lecture = getRandomLecture();
+        } while (lecture.allocatedPeriod.equals(randomPeriod1));
+    }
+
     private double calculateEnergy(List<Lecture> lectures) {
         var energy = 0.0;
         // Calcualte 1.

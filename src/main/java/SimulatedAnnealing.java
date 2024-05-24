@@ -123,10 +123,10 @@ public class SimulatedAnnealing {
         var solution = this.lectureList;
         var optimalSolution = this.lectureList;
 
-        int     IT = 1200;
-        int     L  = 2000;
-        double  T  = 20;
-        double  a  = 0.995;
+        int IT = 1200;
+        int L = 2000;
+        double T = 20;
+        double a = 0.995;
 
         int energySolution = 0;
         int energyCandidate = 0;
@@ -152,7 +152,7 @@ public class SimulatedAnnealing {
                     if (energyCandidate < energyOptimal) {
                         optimalSolution = N;
                         System.out.println("\nOptimal solution found!");
-                        System.out.println("Iteration: " + k + " iter: " + i + " T: " + T );
+                        System.out.println("Iteration: " + k + " iter: " + i + " T: " + T);
                         System.out.println("Energy: " + energyCandidate);
 
                         if (energyCandidate <= 0) {
@@ -244,32 +244,15 @@ public class SimulatedAnnealing {
             lecture = getRandomLecture(newLectureList);
         } while (lecture.allocatedPeriod.equals(randomPeriod));
 
-//        for (var lecture : newLectureList) {
-//            Period randomPeriod;
-//            do {
-//                randomPeriod = this.periodList.get((int) (Math.random() * this.periodList.size()));
-//            } while (lecture.allocatedPeriod.equals(randomPeriod));
-//
-//            // Get the lecture that will probabil switch
-//            Lecture possibleLecture = getLecture(newLectureList, randomPeriod, lecture.classroom);
-//
-//            // Verify the cases
-//            if (possibleLecture != null) {
-//                // Swap the periods
-//                possibleLecture.allocatedPeriod = lecture.allocatedPeriod;
-//            }
-//            lecture.allocatedPeriod = randomPeriod;
-//        }
+        // Get the lecture that will probabil switch
+        Lecture possibleLecture = getLecture(newLectureList, randomPeriod, lecture.classroom);
 
-                    // Get the lecture that will probabil switch
-            Lecture possibleLecture = getLecture(newLectureList, randomPeriod, lecture.classroom);
-
-            // Verify the cases
-            if (possibleLecture != null) {
-                // Swap the periods
-                possibleLecture.allocatedPeriod = lecture.allocatedPeriod;
-            }
-            lecture.allocatedPeriod = randomPeriod;
+        // Verify the cases
+        if (possibleLecture != null) {
+            // Swap the periods
+            possibleLecture.allocatedPeriod = lecture.allocatedPeriod;
+        }
+        lecture.allocatedPeriod = randomPeriod;
 
         return newLectureList;
     }
@@ -277,22 +260,22 @@ public class SimulatedAnnealing {
     private List<Lecture> classroomMove(List<Lecture> lectures) {
         List<Lecture> newLectureList = deepCopy(lectures);
 
-        for (var lecture : newLectureList) {
-            Classroom randomClassroom;
-            do {
-                randomClassroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
-            } while (lecture.classroom.equals(randomClassroom));
+        var randomClassroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
+        // Lecture that will posible switch the classroom
+        Lecture lecture;
+        do {
+            lecture = getRandomLecture(newLectureList);
+        } while (lecture.classroom.equals(randomClassroom));
 
-            // Get the lecture that will probabil switch
-            Lecture possibleLecture = getLecture(newLectureList, lecture.allocatedPeriod, randomClassroom);
+        // Get the lecture that will probabil switch
+        Lecture possibleLecture = getLecture(newLectureList, lecture.allocatedPeriod, randomClassroom);
 
-            // Verify the cases
-            if (possibleLecture != null) {
-                // Swap the periods
-                possibleLecture.classroom = lecture.classroom;
-            }
-            lecture.classroom = randomClassroom;
+        // Verify the cases
+        if (possibleLecture != null) {
+            // Swap the classrooms
+            possibleLecture.classroom = lecture.classroom;
         }
+        lecture.classroom = randomClassroom;
 
         return newLectureList;
     }
@@ -315,7 +298,7 @@ public class SimulatedAnnealing {
         for (var lecture : lectures) {
             for (var lec : lectures) {
                 if (lec.allocatedPeriod.equals(lecture.allocatedPeriod) && lec.allocatedGroup.equals(lecture.allocatedGroup)
-                && lec != lecture) {
+                        && lec != lecture) {
                     energy += 2;
                 }
             }

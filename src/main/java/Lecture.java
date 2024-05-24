@@ -1,4 +1,4 @@
-public class Lecture {
+public class Lecture implements Cloneable {
     public String title;
     public Teacher teacher;
     public Classroom classroom;
@@ -53,5 +53,14 @@ public class Lecture {
     @Override
     public String toString() {
         return title + " " + teacher + " " + classroom + " " + allocatedPeriod + " " + type + " " + allocatedGroup;
+    }
+
+    @Override
+    public Lecture clone() {
+        try {
+            return (Lecture) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

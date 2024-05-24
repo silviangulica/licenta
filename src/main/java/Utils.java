@@ -3,7 +3,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.nio.file.Files;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -35,55 +37,10 @@ public class Utils {
     }
 
     public static void generateHTMLDocumentForLectures(List<Lecture> lectures) {
-
-        lectures.sort((l1, l2) -> {
-            if (l1.allocatedGroup == null && l2.allocatedGroup == null) {
-                return 0;
-            }
-            if (l1.allocatedGroup == null) {
-                return -1;
-            }
-            if (l2.allocatedGroup == null) {
-                return 1;
-            }
-            return l1.allocatedGroup.getName().compareTo(l2.allocatedGroup.getName());
-        });
+        var groupedLectures = lectures.stream()
+                .collect(Collectors.groupingBy(Lecture::getGroupName));
 
 
-        var table = table(
-                thead(
-                        tr(
-                                th("Title"),
-                                th("Teacher"),
-                                th("Classroom"),
-                                th("Period"),
-                                th("Type"),
-                                th("Group")
-                        )
-                )
-        );
-
-        for (Lecture lecture : lectures) {
-            var tr = tr(
-                    td(lecture.title),
-                    td(lecture.teacher.name),
-                    td(lecture.classroom == null ? "" : lecture.classroom.name),
-                    td(lecture.allocatedPeriod == null ? "" : lecture.allocatedPeriod.time.toString() + " " + lecture.allocatedPeriod.weekDay),
-                    td(lecture.type),
-                    td(lecture.getGroupName())
-            );
-
-            if (lectures.stream().filter(l -> l.allocatedPeriod != null && l.allocatedPeriod.equals(lecture.allocatedPeriod) && l.allocatedGroup.equals(lecture.allocatedGroup)).count() > 1) {
-                tr.withClasses("table-danger");
-            }
-
-            table.with(tr);
-        }
-
-        var redRows = lectures.stream().filter(l -> l.allocatedPeriod != null && lectures.stream().filter(l2 -> l2.allocatedPeriod != null && l2.allocatedPeriod.equals(l.allocatedPeriod) && l2.allocatedGroup.equals(l.allocatedGroup)).count() > 1).count();
-        table.with(
-                caption("There are " + redRows + " rows in red")
-        );
 
         var html = html(
                 head(
@@ -92,12 +49,58 @@ public class Utils {
                 ),
                 body(
                         div(
-                                h1("Lectures"),
-                                table.withClasses("table table-striped")
+                                h1("Lectures")
                         ).withClasses("container")
                 )
         );
 
+        for (Map.Entry<String, List<Lecture>> entry : groupedLectures.entrySet()) {
+            var group = entry.getKey();
+            var groupLectures = entry.getValue();
+
+            var groupTable = table(
+                    thead(
+                            tr(
+                                    th("Title"),
+                                    th("Teacher"),
+                                    th("Classroom"),
+                                    th("Period"),
+                                    th("Type"),
+                                    th("Group")
+                            )
+                    )
+            );
+
+            for (Lecture lecture : groupLectures) {
+                var tr = tr(
+                        td(lecture.title),
+                        td(lecture.teacher.name),
+                        td(lecture.classroom == null ? "" : lecture.classroom.name),
+                        td(lecture.allocatedPeriod == null ? "" : lecture.allocatedPeriod.time.toString() + " " + lecture.allocatedPeriod.weekDay),
+                        td(lecture.type),
+                        td(lecture.getGroupName())
+                );
+
+                // check if two groups have the same period
+                if (groupLectures.stream().filter(l -> l.allocatedPeriod != null && l.allocatedPeriod.equals(lecture.allocatedPeriod) && l.allocatedGroup.equals(lecture.allocatedGroup)).count() > 1) {
+                    tr.withClasses("table-danger");
+                }
+
+                groupTable.with(tr);
+            }
+
+            var redRows = groupLectures.stream().filter(l -> l.allocatedPeriod != null && groupLectures.stream().filter(l2 -> l2.allocatedPeriod != null && l2.allocatedPeriod.equals(l.allocatedPeriod) && l2.allocatedGroup.equals(l.allocatedGroup)).count() > 1).count();
+            groupTable.with(
+                    caption("There are " + redRows + " rows in red")
+            );
+
+            html.with(
+                    div(
+                            h2("Group " + group),
+                            groupTable.withClasses("table table-striped")
+                    ).withClasses("container")
+            );
+        }
 
         try {
             var file = new File("output.html");

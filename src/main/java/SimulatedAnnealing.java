@@ -1,6 +1,11 @@
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static java.lang.System.exit;
+import static java.lang.System.setOut;
 
 public class SimulatedAnnealing {
     private final List<Subject> subjectList;
@@ -40,7 +45,7 @@ public class SimulatedAnnealing {
     }
 
     private void generateClassrooms() {
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 7; i++) {
             var classroom = new Classroom("C " + (100 + i), 50);
             this.classroomList.add(classroom);
         }
@@ -112,35 +117,61 @@ public class SimulatedAnnealing {
         }
 
 
-        var currentSolution = this.lectureList;
+        // Implementing the SA part of the algorithm
+        var k = 0;
 
-        var temperature = 1.0;
-        var coolingRate = 0.003;
-        var iters = 0;
+        var solution = this.lectureList;
+        var optimalSolution = this.lectureList;
 
-        while (temperature > 0.1) {
-            var newSolution = this.generateRandomSolution(currentSolution);
+        int     IT = 1200;
+        int     L  = 2000;
+        double  T  = 20;
+        double  a  = 0.995;
 
-            var currentEnergy = this.calculateEnergy(currentSolution);
-            var newEnergy = this.calculateEnergy(newSolution);
+        int energySolution = 0;
+        int energyCandidate = 0;
+        int energyOptimal = 0;
 
-            var deltaEnergy = newEnergy - currentEnergy;
+        while (k < IT) {
 
-            if (deltaEnergy < 0) {
-                currentSolution = newSolution;
-            } else {
-                var random = Math.random();
-                if (random < Math.exp(-deltaEnergy / temperature)) {
-                    currentSolution = newSolution;
+            for (int i = 1; i <= L; i++) {
+                var N1 = periodMove(solution);
+                var N2 = classroomMove(solution);
+
+                var N = Math.random() < 0.5 ? N1 : N2;
+
+                energySolution = calculateEnergy(solution);
+                energyCandidate = calculateEnergy(N);
+
+                var delta = energyCandidate - energySolution;
+
+                if (delta < 0) {
+                    solution = N;
+
+                    energyOptimal = calculateEnergy(optimalSolution);
+                    if (energyCandidate < energyOptimal) {
+                        optimalSolution = N;
+                        System.out.println("\nOptimal solution found!");
+                        System.out.println("Iteration: " + k + " iter: " + i + " T: " + T );
+                        System.out.println("Energy: " + energyCandidate);
+
+                        if (energyCandidate <= 0) {
+                            Utils.generateHTMLDocumentForLectures(optimalSolution);
+                            exit(0);
+                        }
+                    }
+
+                } else if (Math.random() < Math.exp(delta / T)) {
+                    solution = N;
                 }
             }
 
-            temperature *= 1 - coolingRate;
-            System.out.println("Energy: " + deltaEnergy + " Temperature: " + temperature + " Iters: " + iters++);
+            T = a * T;
+            k++;
+            solution = optimalSolution;
         }
 
-
-        this.lectureList = currentSolution;
+        this.lectureList = optimalSolution;
         Utils.generateHTMLDocumentForLectures(this.lectureList);
     }
 
@@ -168,27 +199,6 @@ public class SimulatedAnnealing {
         return false;
     }
 
-    private List<Lecture> generateRandomSolution(List<Lecture> lectures) {
-        var newLectures = new ArrayList<>(lectures);
-        for (Lecture lecture : newLectures) {
-            var classroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
-            var period = this.periodList.get((int) (Math.random() * this.periodList.size()));
-
-            if (lecture.isCourse()) {
-                while( !classroom.isForCourse() ) {
-                    classroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
-                }
-            }
-
-            if (this.isLectureValid(lecture, classroom, period)) {
-                lecture.setClassroom(classroom);
-                lecture.setAllocatedPeriod(period);
-            }
-        }
-
-        return newLectures;
-    }
-
     private boolean isLectureValid(Lecture lecture, Classroom classroom, Period period) {
         for (Lecture lec : this.lectureList) {
             if (lec == lecture) continue;
@@ -204,55 +214,113 @@ public class SimulatedAnnealing {
         return true;
     }
 
-    public Lecture getLecture(Period period, Classroom classroom)
-    {
-        for (var lecture : this.lectureList) {
+    private List<Lecture> deepCopy(List<Lecture> lectures) {
+        return lectures.stream()
+                .map(Lecture::clone)
+                .collect(Collectors.toList());
+    }
+
+    public Lecture getRandomLecture(List<Lecture> lectures) {
+        return lectures.get((int) (Math.random() * this.lectureList.size()));
+    }
+
+    public Lecture getLecture(List<Lecture> lectures, Period period, Classroom classroom) {
+        for (var lecture : lectures) {
             if (lecture.allocatedPeriod.equals(period) && lecture.classroom.equals(classroom)) {
                 return lecture;
             }
         }
-
         return null;
     }
 
-    public Lecture getRandomLecture() {
-        return this.lectureList.get((int) (Math.random() * this.lectureList.size()));
-    }
-
     private List<Lecture> periodMove(List<Lecture> lectures) {
-//        // pick random period and random classroom
-//        var randomPeriod1 = this.periodList.get((int) (Math.random() * this.periodList.size()));
-//        var randomClassroom1 = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
-//
-//        // get the lecture if there are any
-//        Lecture lectureAtRandomPos1 = getLecture(randomPeriod1, randomClassroom1);
+        List<Lecture> newLectureList = deepCopy(lectures);
 
-        // pick random period and random classroom
-        var randomPeriod1 = this.periodList.get((int) (Math.random() * this.periodList.size()));
 
+        var randomPeriod = this.periodList.get((int) (Math.random() * this.periodList.size()));
+        // Lecture that will posible switch the period
         Lecture lecture;
         do {
-            lecture = getRandomLecture();
-        } while (lecture.allocatedPeriod.equals(randomPeriod1));
+            lecture = getRandomLecture(newLectureList);
+        } while (lecture.allocatedPeriod.equals(randomPeriod));
+
+//        for (var lecture : newLectureList) {
+//            Period randomPeriod;
+//            do {
+//                randomPeriod = this.periodList.get((int) (Math.random() * this.periodList.size()));
+//            } while (lecture.allocatedPeriod.equals(randomPeriod));
+//
+//            // Get the lecture that will probabil switch
+//            Lecture possibleLecture = getLecture(newLectureList, randomPeriod, lecture.classroom);
+//
+//            // Verify the cases
+//            if (possibleLecture != null) {
+//                // Swap the periods
+//                possibleLecture.allocatedPeriod = lecture.allocatedPeriod;
+//            }
+//            lecture.allocatedPeriod = randomPeriod;
+//        }
+
+                    // Get the lecture that will probabil switch
+            Lecture possibleLecture = getLecture(newLectureList, randomPeriod, lecture.classroom);
+
+            // Verify the cases
+            if (possibleLecture != null) {
+                // Swap the periods
+                possibleLecture.allocatedPeriod = lecture.allocatedPeriod;
+            }
+            lecture.allocatedPeriod = randomPeriod;
+
+        return newLectureList;
     }
 
-    private double calculateEnergy(List<Lecture> lectures) {
-        var energy = 0.0;
-        // Calcualte 1.
-        // Check if a classroom is too small for a group and also verify if the classroom is for course or not
+    private List<Lecture> classroomMove(List<Lecture> lectures) {
+        List<Lecture> newLectureList = deepCopy(lectures);
+
+        for (var lecture : newLectureList) {
+            Classroom randomClassroom;
+            do {
+                randomClassroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
+            } while (lecture.classroom.equals(randomClassroom));
+
+            // Get the lecture that will probabil switch
+            Lecture possibleLecture = getLecture(newLectureList, lecture.allocatedPeriod, randomClassroom);
+
+            // Verify the cases
+            if (possibleLecture != null) {
+                // Swap the periods
+                possibleLecture.classroom = lecture.classroom;
+            }
+            lecture.classroom = randomClassroom;
+        }
+
+        return newLectureList;
+    }
+
+    private int calculateEnergy(List<Lecture> lectures) {
+        int energy = 0;
+//         Calcualte 1.
+//         Check if a classroom is too small for a group and also verify if the classroom is for course or not
         for (Lecture lecture : lectures) {
             if (lecture.classroom.getCapacity() < lecture.allocatedGroup.getStudentsAmount()) {
+                energy += 1;
+            }
+            if (lecture.classroom.isForCourse() && !lecture.isCourse()) {
                 energy += 1;
             }
         }
 
         // Calculate 2.
-        // Check if the courses are not on monday or tuesday
-        for (Lecture lecture : lectures) {
-            if (lecture.isCourse() && lecture.allocatedPeriod.weekDay > 2) {
-                energy += 1;
+        // Check if a grroup have the same lecture in the same period
+        for (var lecture : lectures) {
+            for (var lec : lectures) {
+                if (lec.allocatedPeriod.equals(lecture.allocatedPeriod) && lec.allocatedGroup.equals(lecture.allocatedGroup)
+                && lec != lecture) {
+                    energy += 2;
+                }
             }
         }
+
 
         return energy;
     }

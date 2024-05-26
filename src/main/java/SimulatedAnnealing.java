@@ -45,7 +45,7 @@ public class SimulatedAnnealing {
     }
 
     private void generateClassrooms() {
-        for (int i = 1; i <= 7; i++) {
+        for (int i = 1; i <= 5; i++) {
             var classroom = new Classroom("C " + (100 + i), 50);
             this.classroomList.add(classroom);
         }
@@ -155,9 +155,10 @@ public class SimulatedAnnealing {
                         System.out.println("Iteration: " + k + " iter: " + i + " T: " + T);
                         System.out.println("Energy: " + energyCandidate);
 
-                        if (energyCandidate <= 0) {
-                            Utils.generateHTMLDocumentForLectures(optimalSolution);
-                            exit(0);
+                        if (energyCandidate == 0) {
+                            this.lectureList = optimalSolution;
+                            Utils.generateHTMLDocumentForLectures(this.lectureList);
+                            return;
                         }
                     }
 
@@ -261,13 +262,12 @@ public class SimulatedAnnealing {
         List<Lecture> newLectureList = deepCopy(lectures);
 
         var randomClassroom = this.classroomList.get((int) (Math.random() * this.classroomList.size()));
-        // Lecture that will posible switch the classroom
+
         Lecture lecture;
         do {
             lecture = getRandomLecture(newLectureList);
         } while (lecture.classroom.equals(randomClassroom));
 
-        // Get the lecture that will probabil switch
         Lecture possibleLecture = getLecture(newLectureList, lecture.allocatedPeriod, randomClassroom);
 
         // Verify the cases
@@ -301,6 +301,14 @@ public class SimulatedAnnealing {
                         && lec != lecture) {
                     energy += 2;
                 }
+            }
+        }
+
+        // Calculate 3.
+        // Try to verify if the Courses are luni si marti
+        for (var lecture : lectures) {
+            if (lecture.isCourse() && lecture.allocatedPeriod.weekDay > 2) {
+                energy += 3;
             }
         }
 

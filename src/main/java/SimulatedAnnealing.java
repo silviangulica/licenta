@@ -312,6 +312,18 @@ public class SimulatedAnnealing {
             }
         }
 
+        // Calculate 4.
+        // Try to put course before the lectures
+        for (var lecture : lectures) {
+            if (lecture.isCourse()) {
+                for (var lec : lectures) {
+                    if (lec.allocatedGroup.equals(lecture.allocatedGroup) && lec.allocatedPeriod.weekDay > lecture.allocatedPeriod.weekDay) {
+                        energy += 4;
+                    }
+                }
+            }
+        }
+
 
         return energy;
     }

@@ -324,6 +324,15 @@ public class SimulatedAnnealing {
             }
         }
 
+//        // try to put every lecture of the same teacher in the same day
+//        for (var lecture : lectures) {
+//            for (var lec : lectures) {
+//                if (lec.teacher.equals(lecture.teacher) && lec.allocatedPeriod.weekDay != lecture.allocatedPeriod.weekDay) {
+//                    energy += 5;
+//                }
+//            }
+//        }
+
 
         return energy;
     }

@@ -2,8 +2,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,5 +107,11 @@ public class Utils {
             System.out.println("Error writing to file");
             System.out.println(e.getMessage());
         }
+    }
+
+    public static List<Lecture> deepCopy(List<Lecture> lectures) {
+        return lectures.stream()
+                .map(Lecture::clone)
+                .collect(Collectors.toList());
     }
 }
